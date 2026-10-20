@@ -1,0 +1,4 @@
+.vagrant/
+control-node/db01_key
+control-node/db01_key.pub
+db01/db01_key.pub

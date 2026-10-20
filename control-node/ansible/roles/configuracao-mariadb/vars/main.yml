@@ -1,0 +1,5 @@
+---
+mysql_root_password: "root"
+mysql_db_name: "notes"
+mysql_user: "notesapp" 
+mysql_user_password: "root"
