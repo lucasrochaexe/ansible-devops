@@ -1,0 +1,74 @@
+---
+- name: Instalacao MariaDB server
+  dnf:
+    name:
+      - mariadb
+      - mariadb-server
+      - python3-PyMySQL
+    state: present
+
+- name: habilitar e iniciar mariadb
+  service:
+    name: mariadb
+    enabled: true
+    state: started
+
+- name: definir senha de root do mariadb
+  community.mysql.mysql_user:
+    name: root
+    host: localhost
+    password: "{{ mysql_root_password }}"
+    login_unix_socket: /var/lib/mysql/mysql.sock
+    check_implicit_admin: yes
+    state: present
+  ignore_errors: true
+
+- name: criar arquivo /root/.my.cnf
+  copy:
+    dest: /root/.my.cnf
+    content: |
+      [client]
+      user=root
+      password={{ mysql_root_password }}
+    owner: root
+    group: root
+    mode: '0600'
+
+- name: remover usuarios anonimos
+  community.mysql.mysql_user:
+    name: ''
+    host_all: yes
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: absent
+
+- name: criar banco de dados da aplicacao
+  community.mysql.mysql_db:
+    name: "{{ mysql_db_name }}"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: present
+
+- name: criar usuario da aplicacao
+  community.mysql.mysql_user:
+    name: "{{ mysql_user }}"
+    host: "%"
+    password: "{{ mysql_user_password }}"
+    priv: "{{ mysql_db_name }}.*:ALL"
+    login_user: root
+    login_password: "{{ mysql_root_password }}"
+    state: present
+
+- name: liberar servico mysql no firewalld
+  firewalld:
+    service: mysql
+    permanent: yes
+    state: enabled
+    immediate: yes
+
+- name: Liberar porta 3306 no firewall
+  firewalld:
+    port: 3306/tcp
+    permanent: true
+    state: enabled
+    immediate: yes
